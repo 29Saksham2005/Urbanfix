@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complaint Submission</title>
+    <link rel="stylesheet" type="text/css" href="govt_css.css">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            background-color: #121212; /* Dark mode background */
+            color: #ffffff; /* Light text for contrast */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .complaint-form {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            background-color: #1e1e1e; /* Darker container background */
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+            max-width: 600px;
+            margin: 40px auto;
+        }
+        .input-group {
+            margin-bottom: 25px;
+            width: 100%;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        input[type="file"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #444;
+            border-radius: 6px;
+            background-color: #2a2a2a;
+            color: #ffffff;
+            font-size: 1em;
+        }
+        button {
+            padding: 14px 22px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+            font-size: 1.1em;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <h2 style="text-align: center; margin-top: 30px; font-size: 2em;">Submit a Complaint</h2>
+    <div class="complaint-form">
+        <div class="input-group">
+            <label for="image">Upload Image:</label>
+            <input type="file" id="image" name="image" accept="image/*">
+        </div>
+
+        <div class="input-group">
+            <label for="description">Enter Description:</label>
+            <textarea id="description" name="description" rows="5" cols="40"></textarea>
+        </div>
+
+        <button type="submit">Submit Complaint</button>
+    </div>
+</body>
+</html>
