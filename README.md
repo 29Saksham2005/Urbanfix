@@ -9,11 +9,11 @@ Authority Dashboard: A dedicated interface for authorities to manage and resolve
 Data Analytics: Analyze reported issues to identify patterns and improve urban planning.
 
 ## Technology Stack
-Frontend: HTML, CSS, JavaScript
-Backend: Java Springboot
-Automation: Python Flask
-Database: MySql
-Authentication: Firebase
+Frontend: HTML, CSS, JavaScript <br />
+Backend: Java Springboot <br />
+Automation: Python Flask <br/>
+Database: MySql <br />
+Authentication: Firebase <br />
 
 ## Usage
 Reporting an Issue: Navigate to the homepage and fill out the report form with a description and optional image.
