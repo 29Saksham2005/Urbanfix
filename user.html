@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complaint Submission</title>
+    <link rel="stylesheet" type="text/css" href="/static/govt_css.css">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            background-color: #121212; /* Dark mode background */
+            color: #ffffff; /* Light text for contrast */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .complaint-form {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #1e1e1e; /* Darker container background */
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            max-width: 500px;
+            width: 90%;
+            margin: 20px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        input[type="file"], textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background-color: #2a2a2a;
+            color: #ffffff;
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+        button {
+            padding: 15px 25px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+            font-size: 1.2em;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-3px);
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    <script src="/static/js/complaint.js" defer></script>
+</head>
+<body>
+    <div class="complaint-form">
+        <h2 style="text-align: center; font-size: 2em; margin-bottom: 20px;">Submit a Complaint</h2>
+        <form id="complaintForm" action="/" method="POST" enctype="multipart/form-data">
+            <div class="input-group">
+                <label for="category">Category:</label>
+                <select id="category" name="category" required>
+                    <option value="Road">Road Issues</option>
+                    <option value="Electricity">Electricity Problems</option>
+                    <option value="Water">Water Supply</option>
+                    <option value="Sanitation">Sanitation</option>
+                    <option value="Other">Other</option>
+                    <option value="Public Transport">Public Transport</option>
+                    <option value="Waste Management">Waste Management</option>
+                </select>
+            </div>
+            <div class="input-group" id="other-category-group" style="display: none;">
+                <label for="other-category">Please specify:</label>
+                <input type="text" id="other-category" name="other-category" placeholder="Specify other category">
+            </div>
+            <script>
+                document.getElementById('category').addEventListener('change', function() {
+                    const otherCategoryGroup = document.getElementById('other-category-group');
+                    if (this.value === 'Other') {
+                        otherCategoryGroup.style.display = 'block';
+                    } else {
+                        otherCategoryGroup.style.display = 'none';
+                    }
+                });
+            </script>
+                    
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" rows="4" placeholder="Describe the issue..." required></textarea>
+            </div>
+            <div class="input-group">
+                <label for="image">Upload Image:</label>
+                <input type="file" id="image" name="image" accept="image/*" required>
+            </div>
+            <button type="submit" disabled>Submit</button>
+            <div id="thank-you-message" style="display: none; text-align: center; margin-top: 20px; color: #28a745; font-size: 1.2em;">
+                Thank you for your submission!
+            </div>
+        </form>
+    </div>
+    <script>
+        document.getElementById("complaintForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            const thankYouMessage = document.getElementById("thank-you-message");
+            
+            // Add loading state
+            submitButton.innerHTML = '<span class="spinner"></span>Submitting...';
+            submitButton.disabled = true;
+            
+            try {
+                const formData = new FormData(event.target);
+                
+                const response = await fetch("/submit_complaint", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    thankYouMessage.style.display = "block";
+                    event.target.reset(); // Reset form after successful submission
+                } else {
+                    throw new Error(`Submission failed: ${response.status}`);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Sorry, there was an error submitting your complaint. Please try again.");
+            } finally {
+                // Reset button state
+                submitButton.innerHTML = 'Submit';
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

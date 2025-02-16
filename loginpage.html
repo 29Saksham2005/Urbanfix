@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            background-color: #121212; /* Dark mode background */
+            color: #ffffff; /* Light text for contrast */
+        }
+        .signin-container {
+            background-color: #1e1e1e; /* Darker container background */
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            margin: auto;
+        }
+        .signin-button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 20px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+        .signin-button:hover {
+            background-color: #0056b3;
+        }
+        .signin-select {
+            background-color: #1e1e1e;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 20px;
+            margin: 10px 0;
+            cursor: pointer;
+            width: 100%;
+        }
+        .signin-input {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 20px;
+            margin: 10px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .signin-input::placeholder {
+            color: #aaa;
+        }
+        .signup-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .signup-button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <button class="signup-button" onclick="window.location.href='registration.html'">Sign Up</button>
+    <div class="top-menu-bar">
+        <h2>Sign In</h2>
+        <div class="signin-container">
+            <div class="signin-options">
+                <button class="signin-button" onclick="signIn('citizen')">Sign In as Citizen</button>
+            </div>
+            
+            <!-- Added phone authentication form -->
+            <div class="email-auth-form" style="margin-top: 20px;">
+                <input type="text" id="email" placeholder="Email" class="signin-input">
+                
+                <div id="password-section">
+                    <input type="password" id="password" placeholder="password" class="signin-input">
+                    <button class="submit" id="Login" onclick="verifyOTP()">Submit</button>
+                </div>
+            </div>
+        </div>
+        <div id="additional-content" style="display: none;"></div>
+    </div>
+    <style>
+        .signin-options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px; /* Spacing between buttons */
+        }
+    </style>
+   <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+    import { getDatabase, set, ref, update } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+  
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+    
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+  apiKey: "AIzaSyDfF3u9NgSVeh362lOnB_oXNF1Bp4Ivf_E",
+  authDomain: "urbanfix-27323.firebaseapp.com",
+  projectId: "urbanfix-27323",
+  storageBucket: "urbanfix-27323.firebasestorage.app",
+  messagingSenderId: "923591248785",
+  appId: "1:923591248785:web:274d5cee94a1da1f282830",
+  measurementId: "G-65WWFPQ1VZ"
+    };
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const auth = getAuth();
+  
+  Login.addEventListener('click',(e)=>{
+    var email = document.getElementById('email').value;
+    var password = document.getElementById('password').value;
+    const auth = getAuth();
+    signInWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+    // Signed in 
+    
+    const user = userCredential.user;
+    const dt = new Date();
+  
+    update(ref(database, 'users/' + user.uid),{
+      last_login: dt,
+    })
+    alert("Signed In Succesfully");
+    window.location.href = 'user.html';
+    // ...
+    })
+    .catch((error) => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+  
+    alert('Invalid Login Credentials');
+    }); 
+  });
+  const user = auth.currentUser;
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+    // User is signed in, see docs for a list of available properties
+    // https://firebase.google.com/docs/reference/js/auth.user
+    const uid = user.uid;
+    // ...
+    } else {
+    // User is signed out
+    // ...
+    }
+  });
+    </script>
+</body>
+</html>

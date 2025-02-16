@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complaint Log</title>
+    <link rel="stylesheet" type="text/css" href="/static/govt_css.css">
+    <style>
+        .complaint-window {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            overflow: hidden; /* Ensure content stays within the container */
+            max-width: 90%; /* Reduced size to fit within window */
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+        }
+        .complaint-details {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 10px; /* Add space between details and description */
+        }
+        .complaint-left {
+            flex: 1;
+        }
+        .complaint-right {
+            flex: 1;
+            text-align: right;
+        }
+        .complaint-description {
+            margin-bottom: 10px; /* Add space between description and button */
+        }
+        .complaint-window button {
+            align-self: flex-end; /* Align button to the right */
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .complaint-window button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="content-area">
+        <h1>Complaint Log</h1>
+
+        <div class="complaint-list" id="complaint-list">
+            <!-- Complaint windows will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script src="/static/govt_js.js"></script>
+    <script>
+        const complaints = [
+            { id: 1, date: '2023-10-01', time: '10:00 AM', description: 'complaint 1', category: 'Noise' },
+            { id: 2, date: '2023-10-02', time: '11:00 AM', description: 'complaint 2', category: 'Pollution' },
+            { id: 3, date: '2023-10-03', time: '12:00 PM', description: 'complaint 3', category: 'Traffic' }
+        ];
+
+        function renderComplaints() {
+            const complaintList = document.getElementById('complaint-list');
+            complaints.forEach(complaint => {
+                const complaintWindow = document.createElement('div');
+                complaintWindow.className = 'complaint-window';
+                complaintWindow.id = `complaint${complaint.id}`;
+
+                complaintWindow.innerHTML = `
+                    <div class="complaint-details">
+                        <div class="complaint-left">
+                            <p>ID: ${complaint.id}</p>
+                            <p>Category: ${complaint.category}</p>
+                        </div>
+                        <div class="complaint-right">
+                            <p>Date: ${complaint.date}</p>
+                            <p>Time: ${complaint.time}</p>
+                        </div>
+                    </div>
+                    <p class="complaint-description">${complaint.description}</p>
+                    <button onclick="markAsActive(event, 'complaint${complaint.id}')">accept</button>
+                `;
+
+                complaintList.appendChild(complaintWindow);
+            });
+        }
+
+        function markAsActive(event, complaintId) {
+            event.stopPropagation(); // Prevent triggering any other functions
+            const complaintBox = document.getElementById(complaintId);
+            complaintBox.style.backgroundColor = 'rgba(0, 255, 0, 0.2)'; // Transparent green
+        }
+
+        // Render complaints on page load
+        document.addEventListener('DOMContentLoaded', renderComplaints);
+    </script>
+</body>
+</html>

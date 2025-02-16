@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registration</title>
+<style>
+body {
+    background-color: #121212; /* Dark mode background */
+    color: #ffffff; /* Light text for contrast */
+    background-image: url('main.jpeg');
+    background-size: cover;
+    background-position: center;
+}
+
+.container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.9; /* Slightly more opaque for better readability */
+}
+
+form {
+    width: 80%;
+    background-color: rgba(30, 30, 30, 0.9); /* Darker form background */
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #555; /* Darker border for inputs */
+    border-radius: 5px;
+    background-color: #333; /* Darker input background */
+    color: #fff; /* Light text for inputs */
+}
+
+input[type="submit"],
+input[type="button"] {
+    background-color: #007bff; /* Blue button background */
+    color: white;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+    transition: background-color 0.3s ease;
+}
+
+input[type="submit"]:hover,
+input[type="button"]:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+h1 {
+    text-align: center;
+    color: #ffffff; /* Light text for heading */
+}
+
+.proceed-btn {
+    display: none; /* Initially hide the proceed button */
+}
+
+.back-to-login {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.back-to-login:hover {
+    background-color: #218838;
+}
+</style>
+</head>
+<body>
+<button class="back-to-login" onclick="window.location.href='loginpage.html'">Back</button>
+<div class="container">
+    <form onsubmit="return validateForm()">
+        <h1>Sign Up</h1>
+        <input type="text" id="name" name="name" placeholder="Name">
+        <input type="text" id="email" name="email" placeholder="Email">
+        <input type="text" id="phoneNumber" name="phoneNumber" placeholder="Phone Number">
+        <input type="password" id="password" name="password" placeholder="Password">
+        <input type="text" id="address" name="address" placeholder="Address">
+
+        <input type="text" id="state" name="state" placeholder="State">
+        
+        <input type="number" id="zipcode" name="zipcode" placeholder="Zipcode">
+        <input type="submit" id='signup' name="signup_submit" value="Sign Up">
+        <input type="button" id='proceed' name="proceed" class="proceed-btn" value="Proceed">
+    </form>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+    import { getDatabase, set, ref } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDfF3u9NgSVeh362lOnB_oXNF1Bp4Ivf_E",
+        authDomain: "urbanfix-27323.firebaseapp.com",
+        projectId: "urbanfix-27323",
+        storageBucket: "urbanfix-27323.firebasestorage.app",
+        messagingSenderId: "923591248785",
+        appId: "1:923591248785:web:274d5cee94a1da1f282830",
+        measurementId: "G-65WWFPQ1VZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    signup.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const name = document.getElementById('name').value;
+        const address = document.getElementById('address').value;
+        
+        const state = document.getElementById('state').value;
+        
+        const zipcode = document.getElementById('zipcode').value;
+        const phoneNumber = document.getElementById('phoneNumber').value;
+
+        const auth = getAuth();
+        createUserWithEmailAndPassword(auth, email, password)
+            .then((userCredential) => {
+                const user = userCredential.user;
+
+                set(ref(database, 'users/' + user.uid), {
+                    name: name,
+                    email: email,
+                    phoneNumber: phoneNumber,
+                    address: address,
+                    city: city,
+                    state: state,
+                    country: country,
+                    zipcode: zipcode
+                });
+
+                alert('User created successfully!');
+                document.getElementById('proceed').classList.remove('proceed-btn'); // Show the proceed button
+                
+            })
+            .catch((error) => {
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                alert(errorMessage);
+            });
+    });
+
+    // Redirect to login.html when the "Proceed" button is clicked
+    proceed.addEventListener('click', () => {
+        window.location.href = 'loginpage.html';
+    });
+</script>
+</body>
+</html>
