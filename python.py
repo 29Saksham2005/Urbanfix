@@ -272,4 +272,4 @@ def submit_complaint():
 # Make sure this is at the bottom of your file
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)'''
+    app.run(debug=True)
