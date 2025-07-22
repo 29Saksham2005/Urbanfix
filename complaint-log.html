@@ -49,6 +49,12 @@
     </style>
 </head>
 <body>
+    <div class="navbar" style="width:100%;background:#181818;padding:16px 0;display:flex;justify-content:center;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+        <a href="user.html" style="color:#fff;text-decoration:none;margin:0 20px;font-size:1.1em;padding:8px 16px;border-radius:5px;transition:background 0.2s;">Submit Complaint</a>
+        <a href="complaint-status.html" style="color:#fff;text-decoration:none;margin:0 20px;font-size:1.1em;padding:8px 16px;border-radius:5px;transition:background 0.2s;">Complaint Status</a>
+        <a href="complaint-log.html" style="color:#fff;text-decoration:none;margin:0 20px;font-size:1.1em;padding:8px 16px;border-radius:5px;transition:background 0.2s;">Complaint Log</a>
+        <a href="loginpage.html" style="color:#fff;text-decoration:none;margin:0 20px;font-size:1.1em;padding:8px 16px;border-radius:5px;transition:background 0.2s;">Logout</a>
+    </div>
     <div class="content-area">
         <h1>Complaint Log</h1>
 
@@ -59,45 +65,50 @@
 
     <script src="/static/govt_js.js"></script>
     <script>
-        const complaints = [
-            { id: 1, date: '2023-10-01', time: '10:00 AM', description: 'complaint 1', category: 'Noise' },
-            { id: 2, date: '2023-10-02', time: '11:00 AM', description: 'complaint 2', category: 'Pollution' },
-            { id: 3, date: '2023-10-03', time: '12:00 PM', description: 'complaint 3', category: 'Traffic' }
-        ];
+        async function fetchComplaints() {
+            const response = await fetch('/complaints/all');
+            if (!response.ok) {
+                alert('Failed to fetch complaints');
+                return [];
+            }
+            return await response.json();
+        }
 
-        function renderComplaints() {
+        async function markAsActive(event, complaintId, id) {
+            event.stopPropagation();
+            // Update status in backend
+            const response = await fetch(`/complaints/${id}/status?status=Running`, { method: 'PUT' });
+            if (response.ok) {
+                document.getElementById(complaintId).style.backgroundColor = 'rgba(0, 255, 0, 0.2)';
+            } else {
+                alert('Failed to update status');
+            }
+        }
+
+        async function renderComplaints() {
+            const complaints = await fetchComplaints();
             const complaintList = document.getElementById('complaint-list');
+            complaintList.innerHTML = '';
             complaints.forEach(complaint => {
                 const complaintWindow = document.createElement('div');
                 complaintWindow.className = 'complaint-window';
                 complaintWindow.id = `complaint${complaint.id}`;
-
                 complaintWindow.innerHTML = `
                     <div class="complaint-details">
                         <div class="complaint-left">
                             <p>ID: ${complaint.id}</p>
-                            <p>Category: ${complaint.category}</p>
+                            <p>Category: ${complaint.category || ''}</p>
                         </div>
                         <div class="complaint-right">
-                            <p>Date: ${complaint.date}</p>
-                            <p>Time: ${complaint.time}</p>
+                            <p>Time: ${complaint.time || ''}</p>
                         </div>
                     </div>
                     <p class="complaint-description">${complaint.description}</p>
-                    <button onclick="markAsActive(event, 'complaint${complaint.id}')">accept</button>
+                    <button onclick="markAsActive(event, 'complaint${complaint.id}', ${complaint.id})">accept</button>
                 `;
-
                 complaintList.appendChild(complaintWindow);
             });
         }
-
-        function markAsActive(event, complaintId) {
-            event.stopPropagation(); // Prevent triggering any other functions
-            const complaintBox = document.getElementById(complaintId);
-            complaintBox.style.backgroundColor = 'rgba(0, 255, 0, 0.2)'; // Transparent green
-        }
-
-        // Render complaints on page load
         document.addEventListener('DOMContentLoaded', renderComplaints);
     </script>
 </body>

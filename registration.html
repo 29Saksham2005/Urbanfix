@@ -88,6 +88,12 @@ h1 {
 </style>
 </head>
 <body>
+    <div class="navbar" style="width:100%;background:#181818;padding:16px 0;display:flex;justify-content:center;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+        <a href="user.html" style="color:#fff;text-decoration:none;margin:0 20px;font-size:1.1em;padding:8px 16px;border-radius:5px;transition:background 0.2s;">Submit Complaint</a>
+        <a href="complaint-status.html" style="color:#fff;text-decoration:none;margin:0 20px;font-size:1.1em;padding:8px 16px;border-radius:5px;transition:background 0.2s;">Complaint Status</a>
+        <a href="complaint-log.html" style="color:#fff;text-decoration:none;margin:0 20px;font-size:1.1em;padding:8px 16px;border-radius:5px;transition:background 0.2s;">Complaint Log</a>
+        <a href="loginpage.html" style="color:#fff;text-decoration:none;margin:0 20px;font-size:1.1em;padding:8px 16px;border-radius:5px;transition:background 0.2s;">Logout</a>
+    </div>
 <button class="back-to-login" onclick="window.location.href='loginpage.html'">Back</button>
 <div class="container">
     <form onsubmit="return validateForm()">
@@ -112,7 +118,7 @@ h1 {
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
 
     const firebaseConfig = {
-        apiKey: "Your-Api-key",
+        apiKey: "AIzaSyDfF3u9NgSVeh362lOnB_oXNF1Bp4Ivf_E",
         authDomain: "urbanfix-27323.firebaseapp.com",
         projectId: "urbanfix-27323",
         storageBucket: "urbanfix-27323.firebasestorage.app",

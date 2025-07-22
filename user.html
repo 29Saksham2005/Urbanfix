@@ -1,31 +1,49 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Complaint Submission</title>
+    <title>Submit Complaint - UrbanFix</title>
     <link rel="stylesheet" type="text/css" href="/static/govt_css.css">
     <style>
         body, html {
             height: 100%;
             margin: 0;
-            background-color: #121212; /* Dark mode background */
-            color: #ffffff; /* Light text for contrast */
+            background-color: #121212;
+            color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            width: 100%;
+            background: #181818;
+            padding: 16px 0;
             display: flex;
             justify-content: center;
             align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .navbar a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 20px;
+            font-size: 1.1em;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+        .navbar a:hover {
+            background: #007bff;
         }
         .complaint-form {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-color: #1e1e1e; /* Darker container background */
+            background-color: #1e1e1e;
             padding: 40px;
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
             max-width: 500px;
             width: 90%;
-            margin: 20px;
+            margin: 40px auto 0 auto;
         }
         .input-group {
             margin-bottom: 20px;
@@ -37,7 +55,7 @@
             font-weight: bold;
             font-size: 1.2em;
         }
-        input[type="file"], textarea, select {
+        input[type="file"], textarea, select, input[type="text"] {
             width: 100%;
             padding: 12px;
             border: 1px solid #444;
@@ -75,13 +93,25 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        #thank-you-message {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: #28a745;
+            font-size: 1.2em;
+        }
     </style>
-    <script src="/static/js/complaint.js" defer></script>
 </head>
 <body>
+    <div class="navbar">
+        <a href="user.html">Submit Complaint</a>
+        <a href="complaint-status.html">Complaint Status</a>
+        <a href="complaint-log.html">Complaint Log</a>
+        <a href="loginpage.html">Logout</a>
+    </div>
     <div class="complaint-form">
         <h2 style="text-align: center; font-size: 2em; margin-bottom: 20px;">Submit a Complaint</h2>
-        <form id="complaintForm" action="/" method="POST" enctype="multipart/form-data">
+        <form id="complaintForm" enctype="multipart/form-data">
             <div class="input-group">
                 <label for="category">Category:</label>
                 <select id="category" name="category" required>
@@ -98,64 +128,75 @@
                 <label for="other-category">Please specify:</label>
                 <input type="text" id="other-category" name="other-category" placeholder="Specify other category">
             </div>
-            <script>
-                document.getElementById('category').addEventListener('change', function() {
-                    const otherCategoryGroup = document.getElementById('other-category-group');
-                    if (this.value === 'Other') {
-                        otherCategoryGroup.style.display = 'block';
-                    } else {
-                        otherCategoryGroup.style.display = 'none';
-                    }
-                });
-            </script>
-                    
-                </select>
-            </div>
             <div class="input-group">
                 <label for="description">Description:</label>
                 <textarea id="description" name="description" rows="4" placeholder="Describe the issue..." required></textarea>
             </div>
             <div class="input-group">
                 <label for="image">Upload Image:</label>
-                <input type="file" id="image" name="image" accept="image/*" required>
+                <input type="file" id="image" name="image" accept="image/*">
             </div>
-            <button type="submit" disabled>Submit</button>
-            <div id="thank-you-message" style="display: none; text-align: center; margin-top: 20px; color: #28a745; font-size: 1.2em;">
-                Thank you for your submission!
-            </div>
+            <button type="submit">Submit</button>
+            <div id="thank-you-message">Thank you for your submission!</div>
         </form>
     </div>
     <script>
+        document.getElementById('category').addEventListener('change', function() {
+            const otherCategoryGroup = document.getElementById('other-category-group');
+            if (this.value === 'Other') {
+                otherCategoryGroup.style.display = 'block';
+            } else {
+                otherCategoryGroup.style.display = 'none';
+            }
+        });
+
+        // Image preview
+        document.getElementById('image').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let preview = document.getElementById('image-preview');
+                    if (!preview) {
+                        preview = document.createElement('img');
+                        preview.id = 'image-preview';
+                        preview.style.maxWidth = '100%';
+                        preview.style.marginTop = '10px';
+                        event.target.parentNode.appendChild(preview);
+                    }
+                    preview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
         document.getElementById("complaintForm").addEventListener("submit", async (event) => {
             event.preventDefault();
-            
             const submitButton = event.target.querySelector('button[type="submit"]');
             const thankYouMessage = document.getElementById("thank-you-message");
-            
-            // Add loading state
             submitButton.innerHTML = '<span class="spinner"></span>Submitting...';
             submitButton.disabled = true;
-            
+            thankYouMessage.style.display = 'none';
             try {
                 const formData = new FormData(event.target);
-                
-                const response = await fetch("/submit_complaint", {
-                    method: "POST",
+                if (formData.get('category') === 'Other') {
+                    formData.set('category', formData.get('other-category'));
+                }
+                const response = await fetch('/complaints/submit', {
+                    method: 'POST',
                     body: formData,
                 });
-
                 if (response.ok) {
-                    const data = await response.json();
                     thankYouMessage.style.display = "block";
-                    event.target.reset(); // Reset form after successful submission
+                    event.target.reset();
+                    const preview = document.getElementById('image-preview');
+                    if (preview) preview.remove();
                 } else {
                     throw new Error(`Submission failed: ${response.status}`);
                 }
             } catch (error) {
-                console.error("Error:", error);
                 alert("Sorry, there was an error submitting your complaint. Please try again.");
             } finally {
-                // Reset button state
                 submitButton.innerHTML = 'Submit';
                 submitButton.disabled = false;
             }

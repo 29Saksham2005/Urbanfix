@@ -26,6 +26,12 @@
     </style>
 </head>
 <body>
+    <div class="navbar" style="width:100%;background:#181818;padding:16px 0;display:flex;justify-content:center;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+        <a href="user.html" style="color:#fff;text-decoration:none;margin:0 20px;font-size:1.1em;padding:8px 16px;border-radius:5px;transition:background 0.2s;">Submit Complaint</a>
+        <a href="complaint-status.html" style="color:#fff;text-decoration:none;margin:0 20px;font-size:1.1em;padding:8px 16px;border-radius:5px;transition:background 0.2s;">Complaint Status</a>
+        <a href="complaint-log.html" style="color:#fff;text-decoration:none;margin:0 20px;font-size:1.1em;padding:8px 16px;border-radius:5px;transition:background 0.2s;">Complaint Log</a>
+        <a href="loginpage.html" style="color:#fff;text-decoration:none;margin:0 20px;font-size:1.1em;padding:8px 16px;border-radius:5px;transition:background 0.2s;">Logout</a>
+    </div>
     <div class="container">
         <div class="complaint-section">
             <h2>Active Complaints</h2>
@@ -60,47 +66,73 @@
 
     <script src="/static/govt_js.js"></script>
     <script>
-        const activeComplaints = [
-            { id: 1, description: 'complaint 1' },
-            { id: 2, description: 'complaint 2' },
-            { id: 3, description: 'complaint 3' }
-        ];
+        async function fetchComplaints() {
+            const response = await fetch('/complaints/all');
+            if (!response.ok) {
+                alert('Failed to fetch complaints');
+                return { active: [], resolved: [] };
+            }
+            const complaints = await response.json();
+            const active = complaints.filter(c => c.status !== 'Resolved');
+            const resolved = complaints.filter(c => c.status === 'Resolved');
+            return { active, resolved };
+        }
 
-        const resolvedComplaints = [
-            { id: 4, description: 'complaint 4' },
-            { id: 5, description: 'complaint 5' }
-        ];
+        function showDetails(id) {
+            // Simple modal logic (can be improved)
+            const complaint = window.allComplaints.find(c => c.id === id);
+            if (!complaint) return;
+            const modal = document.getElementById('complaintDetailsModal');
+            const content = document.getElementById('modalContent');
+            content.innerHTML = `
+                <h3>Complaint Details</h3>
+                <p><b>ID:</b> ${complaint.id}</p>
+                <p><b>Description:</b> ${complaint.description}</p>
+                <p><b>Status:</b> ${complaint.status}</p>
+                <p><b>Category:</b> ${complaint.category || ''}</p>
+                <p><b>Location:</b> ${complaint.location || ''}</p>
+                <p><b>Time:</b> ${complaint.time || ''}</p>
+                <p><b>Assigned Department:</b> ${complaint.assignedDepartment || ''}</p>
+            `;
+            modal.style.display = 'block';
+        }
+        function closeModal() {
+            document.getElementById('complaintDetailsModal').style.display = 'none';
+        }
+        document.querySelector('.close-button').onclick = closeModal;
+        window.onclick = function(event) {
+            const modal = document.getElementById('complaintDetailsModal');
+            if (event.target === modal) closeModal();
+        };
 
-        function renderComplaints() {
+        async function renderComplaints() {
+            const { active, resolved } = await fetchComplaints();
+            window.allComplaints = [...active, ...resolved];
             const activeComplaintList = document.getElementById('active-complaint-list');
-            activeComplaints.forEach(complaint => {
+            const resolvedComplaintList = document.getElementById('resolved-complaint-list');
+            activeComplaintList.innerHTML = '';
+            resolvedComplaintList.innerHTML = '';
+            active.forEach(complaint => {
                 const complaintWindow = document.createElement('div');
                 complaintWindow.className = 'complaint-window';
                 complaintWindow.onclick = () => showDetails(complaint.id);
-
                 complaintWindow.innerHTML = `
                     <p>${complaint.description}</p>
-                    <button>forward</button>
+                    <button>View Details</button>
                 `;
-
                 activeComplaintList.appendChild(complaintWindow);
             });
-
-            const resolvedComplaintList = document.getElementById('resolved-complaint-list');
-            resolvedComplaints.forEach(complaint => {
+            resolved.forEach(complaint => {
                 const complaintWindow = document.createElement('div');
                 complaintWindow.className = 'complaint-window';
                 complaintWindow.onclick = () => showDetails(complaint.id);
-
                 complaintWindow.innerHTML = `
                     <p>${complaint.description}</p>
-                    <button>view details</button>
+                    <button>View Details</button>
                 `;
-
                 resolvedComplaintList.appendChild(complaintWindow);
             });
         }
-
         document.addEventListener('DOMContentLoaded', renderComplaints);
     </script>
 </body>
