@@ -1,21 +1,28 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 import os
-import mysql.connector
 import logging
-from dotenv import load_dotenv
+from datetime import datetime
+import uuid
+from pymongo import MongoClient
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.secret_key = 'your-secret-key-here'  # Required for flash messages
 
-# Configure upload folder (where images will be saved)
+# Standardized upload folder path
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Allowed extensions for image uploads
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+# MongoDB Atlas connection
+MONGODB_URI = 'mongodb+srv://sakshamssingh29_db_user:QTqyzm5c2gRSvosX@complaints.uyqxbrl.mongodb.net/?retryWrites=true&w=majority&appName=complaints'
+client = MongoClient(MONGODB_URI)
+db = client['urbanfix']
+complaints_collection = db['complaints']
 
 # Set up logging
 logging.basicConfig(
@@ -56,38 +63,18 @@ try:
 except Exception as e:
     logger.error(f"Error checking directory permissions: {e}")
 
-load_dotenv()  # Load environment variables from .env file
-
-# Database connection parameters
-DB_CONFIG = {
-    'host': os.getenv('MYSQL_HOST', 'localhost'),
-    'user': os.getenv('MYSQL_USER'),
-    'password': os.getenv('MYSQL_PASSWORD'),
-    'database': os.getenv('MYSQL_DATABASE')
-}
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def init_db():
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS complaints (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                image_filename VARCHAR(255) NOT NULL,
-                description TEXT NOT NULL,
-                category VARCHAR(100) NOT NULL
-            )
-        ''')
-        conn.commit()
-    except mysql.connector.Error as e:
-        print(f"An error occurred while initializing the database: {e}")
-    finally:
-        if 'conn' in locals() and conn.is_connected():
-            cursor.close()
-            conn.close()
+        # MongoDB collections are created automatically when first document is inserted
+        # Test connection
+        client.admin.command('ping')
+        logger.info("MongoDB connection established successfully")
+    except Exception as e:
+        logger.error(f"Error connecting to MongoDB: {e}")
+        logger.error("Please ensure MongoDB is running on localhost:27017")
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -139,23 +126,28 @@ def index():
 
             # Database operations
             try:
-                conn = mysql.connector.connect(**DB_CONFIG)
-                cursor = conn.cursor()
-                cursor.execute(
-                    'INSERT INTO complaints (image_filename, description, category) VALUES (%s, %s, %s)',
-                    (filename, description, category)
-                )
-                conn.commit()
+                # Generate unique complaint ID
+                complaint_id = str(uuid.uuid4())[:8]
+                
+                complaint_doc = {
+                    'description': description,
+                    'complaintID': complaint_id,
+                    'time': datetime.now().isoformat(),
+                    'location': '',
+                    'category': category,
+                    'image': filename,
+                    'status': 'Pending',
+                    'assignedDepartment': None,
+                    'user_id': None
+                }
+                
+                complaints_collection.insert_one(complaint_doc)
                 logger.info("Database entry created successfully")
-                flash('Complaint submitted successfully!')
-            except mysql.connector.Error as e:
+                flash(f'Complaint submitted successfully! Complaint ID: {complaint_id}')
+            except Exception as e:
                 logger.error(f"Database error: {str(e)}")
                 flash('Error saving to database')
                 return render_template('user.html')
-            finally:
-                if 'conn' in locals() and conn.is_connected():
-                    cursor.close()
-                    conn.close()
 
             return redirect(url_for('index'))
 
@@ -248,22 +240,27 @@ def submit_complaint():
             return jsonify({'error': f'Error saving file: {str(e)}'}), 500
 
         try:
-            conn = mysql.connector.connect(**DB_CONFIG)
-            cursor = conn.cursor()
-            cursor.execute(
-                'INSERT INTO complaints (image_filename, description, category) VALUES (%s, %s, %s)',
-                (filename, description, category)
-            )
-            conn.commit()
+            # Generate unique complaint ID
+            complaint_id = str(uuid.uuid4())[:8]
+            
+            complaint_doc = {
+                'description': description,
+                'complaintID': complaint_id,
+                'time': datetime.now().isoformat(),
+                'location': '',
+                'category': category,
+                'image': filename,
+                'status': 'Pending',
+                'assignedDepartment': None,
+                'user_id': None
+            }
+            
+            complaints_collection.insert_one(complaint_doc)
             logger.info("Database entry created successfully")
-            return jsonify({'message': 'Complaint submitted successfully'}), 200
-        except mysql.connector.Error as e:
+            return jsonify({'message': 'Complaint submitted successfully', 'complaint_id': complaint_id}), 200
+        except Exception as e:
             logger.error(f"Database error: {str(e)}")
             return jsonify({'error': f'Database error: {str(e)}'}), 500
-        finally:
-            if 'conn' in locals() and conn.is_connected():
-                cursor.close()
-                conn.close()
 
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}", exc_info=True)

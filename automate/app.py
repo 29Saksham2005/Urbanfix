@@ -1,11 +1,13 @@
 import os
-import sqlite3
 import smtplib
 import schedule
 import time
 from flask import Flask, request, jsonify, render_template
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from pymongo import MongoClient
+from datetime import datetime
+import uuid
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -13,27 +15,22 @@ load_dotenv()
 
 app = Flask(__name__)
 
+# Standardized upload folder path
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-DB_FILE = "complaints.db"
+# MongoDB Atlas connection
+MONGODB_URI = 'mongodb+srv://sakshamssingh29_db_user:QTqyzm5c2gRSvosX@complaints.uyqxbrl.mongodb.net/?retryWrites=true&w=majority&appName=complaints'
+client = MongoClient(MONGODB_URI)
+db = client['urbanfix']
+complaints_collection = db['complaints']
 
 # Database Initialization
 def init_db():
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS complaints (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            category TEXT,
-            description TEXT,
-            image_path TEXT,
-            status TEXT DEFAULT 'Pending'
-        )
-    """)
-    conn.commit()
-    conn.close()
+    # MongoDB collections are created automatically when first document is inserted
+    # No explicit initialization needed for MongoDB
+    pass
 
 init_db()
 
@@ -42,33 +39,45 @@ init_db()
 def submit_complaint():
     category = request.form.get("category")
     description = request.form.get("description")
+    location = request.form.get("location", "")
     image = request.files.get("image")
-
-    if image:
-        image_path = os.path.join(app.config["UPLOAD_FOLDER"], image.filename)
+    
+    # Generate unique complaint ID
+    complaint_id = str(uuid.uuid4())[:8]
+    
+    # Handle image upload
+    image_filename = None
+    if image and image.filename:
+        ext = os.path.splitext(image.filename)[1]
+        image_filename = f"{uuid.uuid4().hex}{ext}"
+        image_path = os.path.join(app.config["UPLOAD_FOLDER"], image_filename)
         image.save(image_path)
-    else:
-        image_path = None
 
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO complaints (category, description, image_path) VALUES (?, ?, ?)",
-                   (category, description, image_path))
-    conn.commit()
-    conn.close()
+    # Insert complaint into MongoDB
+    complaint_doc = {
+        'description': description,
+        'complaintID': complaint_id,
+        'time': datetime.now().isoformat(),
+        'location': location,
+        'category': category,
+        'image': image_filename,
+        'status': 'Pending',
+        'assignedDepartment': None,
+        'user_id': None
+    }
+    complaints_collection.insert_one(complaint_doc)
 
-    return jsonify({"message": "Complaint submitted successfully!"})
+    return jsonify({"message": "Complaint submitted successfully!", "complaint_id": complaint_id})
 
 # 🚀 Retrieve Complaints API
 @app.route("/get_complaints", methods=["GET"])
 def get_complaints():
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM complaints")
-    complaints = cursor.fetchall()
-    conn.close()
-
-    return jsonify([{"id": c[0], "category": c[1], "description": c[2], "image": c[3], "status": c[4]} for c in complaints])
+    complaints = list(complaints_collection.find())
+    result = []
+    for complaint in complaints:
+        complaint['_id'] = str(complaint['_id'])  # Convert ObjectId to string
+        result.append(complaint)
+    return jsonify(result)
 
 # 🚀 Update Complaint Status API
 @app.route("/update_status", methods=["POST"])
@@ -76,21 +85,24 @@ def update_status():
     complaint_id = request.form.get("id")
     new_status = request.form.get("status")
 
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("UPDATE complaints SET status = ? WHERE id = ?", (new_status, complaint_id))
-    conn.commit()
-    conn.close()
+    from bson import ObjectId
+    try:
+        object_id = ObjectId(complaint_id)
+        result = complaints_collection.update_one(
+            {'_id': object_id},
+            {'$set': {'status': new_status}}
+        )
+        if result.matched_count == 0:
+            return jsonify({"error": "Complaint not found"}), 404
+    except Exception as e:
+        return jsonify({"error": "Invalid complaint ID"}), 400
 
     return jsonify({"message": "Status updated successfully!"})
 
 # 🚀 Automate Email Forwarding of Unresolved Complaints
 def send_complaints():
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, category, description FROM complaints WHERE status='Pending'")
-    complaints = cursor.fetchall()
-    conn.close()
+    # Find pending complaints
+    complaints = list(complaints_collection.find({"status": "Pending"}))
 
     if not complaints:
         print("No pending complaints to send.")
@@ -107,7 +119,10 @@ def send_complaints():
     server.login(sender_email, sender_password)
 
     for complaint in complaints:
-        complaint_id, category, description = complaint
+        complaint_id = complaint['complaintID']
+        category = complaint['category']
+        description = complaint['description']
+        
         msg = MIMEMultipart()
         msg["From"] = sender_email
         msg["To"] = recipient_email
@@ -120,11 +135,11 @@ def send_complaints():
             server.sendmail(sender_email, recipient_email, msg.as_string())
             print(f"Complaint ID {complaint_id} sent successfully.")
 
-            conn = sqlite3.connect(DB_FILE)
-            cursor = conn.cursor()
-            cursor.execute("UPDATE complaints SET status='Sent' WHERE id=?", (complaint_id,))
-            conn.commit()
-            conn.close()
+            # Update status to 'Sent'
+            complaints_collection.update_one(
+                {"_id": complaint["_id"]},
+                {"$set": {"status": "Sent"}}
+            )
 
         except Exception as e:
             print(f"Failed to send Complaint ID {complaint_id}. Error: {e}")
