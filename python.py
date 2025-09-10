@@ -19,7 +19,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 # MongoDB Atlas connection
-MONGODB_URI = 'mongodb+srv://sakshamssingh29_db_user:QTqyzm5c2gRSvosX@complaints.uyqxbrl.mongodb.net/?retryWrites=true&w=majority&appName=complaints'
+MONGODB_URI = 'mongodb+srv://sakshamssingh29_db_user:<password>@complaints.uyqxbrl.mongodb.net/?retryWrites=true&w=majority&appName=complaints'
 client = MongoClient(MONGODB_URI)
 db = client['urbanfix']
 complaints_collection = db['complaints']
@@ -269,4 +269,5 @@ def submit_complaint():
 # Make sure this is at the bottom of your file
 if __name__ == '__main__':
     init_db()
+
     app.run(debug=True)
