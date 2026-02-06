@@ -5,7 +5,7 @@ UrbanFix is a comprehensive platform designed to streamline the reporting and ma
 Citizen Issue Reporting – Users can easily report problems like potholes, broken streetlights by uploading photos, descriptions, and location tags.
 Real-Time Tracking: Track the status of reported issues in real-time.
 Automated Notifications: Receive updates via email or SMS as issues are addressed.
-Authority Dashboard: A dedicated interface for authorities to manage and resolve complaints.
+Authority Dashboard: A dedicated interface for authorities to manage and complaints.
 Data Analytics: Analyze reported issues to identify patterns and improve urban planning.
 
 ## Technology Stack
